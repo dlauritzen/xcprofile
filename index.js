@@ -1,5 +1,8 @@
 
+var _ = require('underscore');
+var async = require('async');
 var fs = require('fs');
+var path = require('path');
 var plistlib = require('plistlib');
 
 function indexOfBuffer(haystack, needle) {
@@ -23,7 +26,7 @@ var startBuffer = new Buffer('<?xml version="1.0"');
 var endBuffer = new Buffer('</plist>');
 
 exports.load = function(filename, done) {
-	console.log('Loading file %s.', filename);
+	// console.log('Loading file %s.', filename);
 	fs.readFile(filename, function(err, data) {
 		if (err) return done(err);
 		// console.log('File loaded. Length: %d bytes.', data.length);
@@ -41,6 +44,25 @@ exports.load = function(filename, done) {
 			if (err) return done(err);
 			// console.log(util.inspect(plist, { depth: null }));
 			return done(null, plist); // XXX: Don't rely on this return value. I will probably manipulate it instead of returning.
+		});
+	});
+}
+
+exports.loadDirectory = function(folder, done) {
+	fs.readdir(folder, function(err, files) {
+		if (err) return done(err);
+
+		async.mapLimit(files, 5, function(filename, next) {
+			if (path.extname(filename) == '.mobileprovision') {
+				exports.load(path.join(folder, filename), next);
+			}
+			else {
+				next(null, null);
+			}
+		}, function(err, results) {
+			if (err) return done(err);
+			// remove null elements
+			return done(null, _.compact(results));
 		});
 	});
 }

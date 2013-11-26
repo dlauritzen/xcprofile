@@ -1,9 +1,21 @@
 
+var _ = require('underscore');
+var stringTable = require('string-table');
+var util = require('util');
+
 var xcprofile = require('./index');
 
-var profilePath = '/Users/dallinl/Desktop/0AB2F10B-8F44-4D7E-9F95-78F05D9B1E0D.mobileprovision';
-// var profilePath = '/Users/dallinl/Downloads/profiles/iOS_Team_Provisioning_Profile_netparentlinkwestgenesee.mobileprovision';
-
-xcprofile.load(profilePath, function(err) {
+xcprofile.loadDirectory('.', function(err, plists) {
 	if (err) console.log(err);
+	var data = [];
+	_.each(plists, function(plist) {
+		var obj = {};
+		obj.app_id_name = plist.value.AppIDName.value;
+		obj.app_id = plist.value.Entitlements.value["application-identifier"].value;
+		obj.profile_name = plist.value.Name.value;
+		obj.UUID = plist.value.UUID.value;
+		obj.team_id = plist.value.TeamIdentifier.value[0].value;
+		data.push(obj);
+	});
+	console.log(stringTable.create(data))
 });
